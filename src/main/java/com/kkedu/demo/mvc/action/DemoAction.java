@@ -18,8 +18,6 @@ public class DemoAction {
 	@KKAutowired
 	private IDemoService demoService;
 
-
-
 	@KKRequestMapping("/query")
 	public void query(HttpServletRequest req, HttpServletResponse resp,
 					  @KKRequestParam("name") String name){

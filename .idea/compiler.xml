@@ -12,7 +12,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="KKspring" options="-verbose -bootclasspath &quot;E:/Program Files/Java/jdk1.8.0_152/jre/lib/rt.jar&quot;" />
+      <module name="KKspring" options="-verbose -bootclasspath &quot;$PROJECT_DIR$/../../Program Files/Java/jdk1.8.0_152/jre/lib/rt.jar&quot;" />
     </option>
   </component>
 </project>
