@@ -2,7 +2,6 @@ package com.kkedu.mvcframework.bean.support;
 
 import com.kkedu.mvcframework.bean.config.KKBeanDefinition;
 import com.kkedu.mvcframework.core.KKBeanFactory;
-import org.springframework.context.annotation.Bean;
 
 import java.util.HashMap;
 import java.util.List;
