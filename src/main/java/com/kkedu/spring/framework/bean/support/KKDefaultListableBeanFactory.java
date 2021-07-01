@@ -1,7 +1,7 @@
-package com.kkedu.mvcframework.bean.support;
+package com.kkedu.spring.framework.bean.support;
 
-import com.kkedu.mvcframework.bean.config.KKBeanDefinition;
-import com.kkedu.mvcframework.core.KKBeanFactory;
+import com.kkedu.spring.framework.bean.config.KKBeanDefinition;
+import com.kkedu.spring.framework.core.KKBeanFactory;
 
 import java.util.HashMap;
 import java.util.List;

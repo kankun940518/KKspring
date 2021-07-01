@@ -1,6 +1,6 @@
-package com.kkedu.mvcframework.bean.support;
+package com.kkedu.spring.framework.bean.support;
 
-import com.kkedu.mvcframework.bean.config.KKBeanDefinition;
+import com.kkedu.spring.framework.bean.config.KKBeanDefinition;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.kkedu.mvcframework.annotation;
+package com.kkedu.spring.framework.annotation;
 
 import java.lang.annotation.*;
 

@@ -1,4 +1,4 @@
-package com.kkedu.mvcframework.bean.config;
+package com.kkedu.spring.framework.bean.config;
 
 public class KKBeanDefinition {
 

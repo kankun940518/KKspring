@@ -1,4 +1,4 @@
-package com.kkedu.mvcframework.bean;
+package com.kkedu.spring.framework.bean;
 
 public class KKBeanWrapper {
 

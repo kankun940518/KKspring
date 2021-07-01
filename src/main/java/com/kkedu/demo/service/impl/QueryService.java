@@ -1,6 +1,6 @@
 package com.kkedu.demo.service.impl;
 
-import com.kkedu.mvcframework.annotation.KKService;
+import com.kkedu.spring.framework.annotation.KKService;
 import com.kkedu.demo.service.IQueryService;
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,10 +1,10 @@
-package com.kkedu.mvcframework.annotation;
+package com.kkedu.spring.framework.annotation;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE})
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface KKService {
+public @interface KKAutowired {
     String value() default "";
 }

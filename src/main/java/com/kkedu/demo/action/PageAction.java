@@ -1,11 +1,11 @@
 package com.kkedu.demo.action;
 
-import com.kkedu.mvcframework.annotation.KKAutowired;
-import com.kkedu.mvcframework.annotation.KKController;
-import com.kkedu.mvcframework.annotation.KKRequestMapping;
-import com.kkedu.mvcframework.annotation.KKRequestParam;
+import com.kkedu.spring.framework.annotation.KKAutowired;
+import com.kkedu.spring.framework.annotation.KKController;
+import com.kkedu.spring.framework.annotation.KKRequestMapping;
+import com.kkedu.spring.framework.annotation.KKRequestParam;
 import com.kkedu.demo.service.IQueryService;
-import com.kkedu.mvcframework.servlet.KKModelAndView;
+import com.kkedu.spring.framework.servlet.KKModelAndView;
 
 import java.util.HashMap;
 import java.util.Map;

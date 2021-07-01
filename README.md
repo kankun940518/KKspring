@@ -1,3 +1,2 @@
 # KKspring
-学习地
-简单的用代码写的spring代码 基本上满足  大家一起来学习提高
+从servlet出发去然后一步步去写成一个mini版本spring 满足IoC DI AOP MVC功能

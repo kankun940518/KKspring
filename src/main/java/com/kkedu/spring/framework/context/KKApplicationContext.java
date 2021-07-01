@@ -1,13 +1,13 @@
-package com.kkedu.mvcframework.context;
+package com.kkedu.spring.framework.context;
 
-import com.kkedu.mvcframework.annotation.KKAutowired;
-import com.kkedu.mvcframework.annotation.KKController;
-import com.kkedu.mvcframework.annotation.KKService;
-import com.kkedu.mvcframework.bean.KKBeanWrapper;
-import com.kkedu.mvcframework.bean.config.KKBeanDefinition;
-import com.kkedu.mvcframework.bean.support.KKBeanDefinitionReader;
-import com.kkedu.mvcframework.bean.support.KKDefaultListableBeanFactory;
-import com.kkedu.mvcframework.core.KKBeanFactory;
+import com.kkedu.spring.framework.annotation.KKAutowired;
+import com.kkedu.spring.framework.annotation.KKController;
+import com.kkedu.spring.framework.annotation.KKService;
+import com.kkedu.spring.framework.bean.KKBeanWrapper;
+import com.kkedu.spring.framework.bean.config.KKBeanDefinition;
+import com.kkedu.spring.framework.bean.support.KKBeanDefinitionReader;
+import com.kkedu.spring.framework.bean.support.KKDefaultListableBeanFactory;
+import com.kkedu.spring.framework.core.KKBeanFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;

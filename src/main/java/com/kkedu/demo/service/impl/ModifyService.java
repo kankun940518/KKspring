@@ -2,7 +2,7 @@ package com.kkedu.demo.service.impl;
 
 
 import com.kkedu.demo.service.IModifyService;
-import com.kkedu.mvcframework.annotation.KKService;
+import com.kkedu.spring.framework.annotation.KKService;
 
 /**
  * 增删改业务

@@ -5,7 +5,7 @@
 <web-app>
   <servlet>
     <servlet-name>kkMvc</servlet-name>
-    <servlet-class>com.kkedu.mvcframework.servlet.KKDispatcherServlet</servlet-class>
+    <servlet-class>com.kkedu.spring.framework.servlet.KKDispatcherServlet</servlet-class>
     <init-param>
       <param-name>contextConfigLocation</param-name>
       <param-value>classpath:application.properties</param-value>
