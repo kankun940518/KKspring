@@ -10,18 +10,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URL;
+import java.lang.reflect.Method;;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class KKDispatcherServlet extends HttpServlet {
 
     //保存url和Method的对应关系
-    private Map<String,Method> handlerMapping = new HashMap<String,Method>();
+    private List<KKHandlerMapping> handlerMappings = new ArrayList<KKHandlerMapping>();
 
+    private Map<KKHandlerMapping,KKHandlerAdapter> handlerAdapters = new HashMap<KKHandlerMapping,KKHandlerAdapter>();
+
+    private List<KKViewResolver> viewResolvers = new ArrayList<KKViewResolver>();
     //ioc容器
     private KKApplicationContext applicationContext = null;
 
@@ -37,12 +39,36 @@ public class KKDispatcherServlet extends HttpServlet {
             doDispatch(req,resp);
         } catch (Exception e) {
             e.printStackTrace();
-            resp.getWriter().write("500 Exception Detail:"+Arrays.toString(e.getStackTrace()));
+            Map<String,Object> model = new HashMap<String,Object>();
+            model.put("detail","500 Excpetion Detail:");
+            model.put("stackTrace",Arrays.toString(e.getStackTrace()));
+            try {
+                processDispatchResult(req,resp,new KKModelAndView("500",model));
+            }catch (Exception exception){
+                exception.printStackTrace();
+            }
         }
     }
 
     private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        String url = req.getRequestURI();
+        //1、根据Url 拿到对应的Handler
+        KKHandlerMapping handler = getHandler(req);
+
+        if (null == handler){
+            processDispatchResult(req,resp,new KKModelAndView("404"));
+            return;
+        }
+
+        //2、根据HandlerMapping 去拿到Adapter
+        KKHandlerAdapter ha = getHandlerAdapter(handler);
+
+        //3、根据HandlerAdapter拿到对应的ModerAndView
+        KKModelAndView mv = ha.handle(req,resp,handler);
+
+        //4、根据ViewResolver找到对应的View对象
+        //通过View对象渲染页面，返回
+        processDispatchResult(req,resp,mv);
+       /* String url = req.getRequestURI();
         String contextPath = req.getContextPath();
         url = url.replaceAll(contextPath,"").replaceAll("/+","/");
 
@@ -106,23 +132,118 @@ public class KKDispatcherServlet extends HttpServlet {
 
         String beanName = toLowerFirstCase(method.getDeclaringClass().getSimpleName());
         //3、组成动态实际参数列表，传给反射调用
-        method.invoke(applicationContext.getBean(beanName),paramValues);
+        method.invoke(applicationContext.getBean(beanName),paramValues);*/
     }
+
+
+
+    private void processDispatchResult(HttpServletRequest req, HttpServletResponse resp, KKModelAndView mv) throws Exception {
+        if (null == mv){return; }
+        if (this.viewResolvers.isEmpty()){return;}
+
+        for (KKViewResolver viewResolver : this.viewResolvers) {
+            KKView view = viewResolver.resolverViewName(mv.getViewName());
+            view.render(mv.getModel(),req,resp);
+            return;
+        }
+    }
+
+    private KKHandlerAdapter getHandlerAdapter(KKHandlerMapping handler) {
+        if (this.handlerAdapters.isEmpty()){return null;}
+        KKHandlerAdapter ha = this.handlerAdapters.get(handler);
+        return ha;
+    }
+
+    private KKHandlerMapping getHandler(HttpServletRequest req) {
+       String url = req.getRequestURI();
+        String contextPath = req.getContextPath();
+        url = url.replaceAll(contextPath,"").replaceAll("/+","/");
+
+        for (KKHandlerMapping handlerMapping : this.handlerMappings) {
+            Matcher matcher = handlerMapping.getPattern().matcher(url);
+            if (!matcher.matches()){continue;}
+            return handlerMapping;
+        }
+        return null;
+
+    }
+
     @Override
     public void init(ServletConfig config) throws ServletException {
 
 
 
         applicationContext = new KKApplicationContext(config.getInitParameter("contextConfigLocation"));
-
+        //========MVC=========
+        initStrategies(applicationContext);
 
         //5、初始化HandlerMapping
-        doInitHandlerMapping();
+       /* doInitHandlerMapping();*/
         System.out.println("KK Spring framework is init!");
+    }
+    //初始化策略
+    private void initStrategies(KKApplicationContext context) {
+        //handlerMapping
+        initHandlerMappings(context);
+
+        //初始化参数适配器
+        initHandlerAdapters(context);
+        //初始化视图转换器
+        initViewResolvers(context);
+
+    }
+
+    private void initViewResolvers(KKApplicationContext context) {
+        String templateRoot = context.getConfig().getProperty("templateRoot");
+        String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
+        File templateDir =new File(templateRootPath);
+        for (File file : templateDir.listFiles()) {
+            this.viewResolvers.add(new KKViewResolver(templateRoot));
+        }
+    }
+
+    private void initHandlerAdapters(KKApplicationContext context) {
+        for (KKHandlerMapping handlerMapping : handlerMappings) {
+            this.handlerAdapters.put(handlerMapping,new KKHandlerAdapter());
+        }
+    }
+
+    private void initHandlerMappings(KKApplicationContext context) {
+
+        if (this.applicationContext.getBeanDefinitionCount() == 0){ return;}
+
+        for (String beanName :this.applicationContext.getBeanDefinitionNames()) {
+            Object instance = applicationContext.getBean(beanName);
+            Class<?> clazz = instance.getClass();
+
+            if (!clazz.isAnnotationPresent(KKController.class)){continue;}
+
+            //保存写在类上面的@KKRequestMapping("/demo")
+            String baseUrl = "";
+
+            if (clazz.isAnnotationPresent(KKRequestMapping.class)){
+                KKRequestMapping requestMapping = clazz.getAnnotation(KKRequestMapping.class);
+                baseUrl = requestMapping.value();
+            }
+            //默认获取所有的public方法
+            for (Method method : clazz.getMethods()) {
+                if (!method.isAnnotationPresent(KKRequestMapping.class)){continue;}
+                KKRequestMapping requestMapping = method.getAnnotation(KKRequestMapping.class);
+                //避免出现 demoquery或者demo//query的情况
+
+                String regex = ("/"+baseUrl+"/"+requestMapping.value())
+                        .replaceAll("\\*",".*")
+                        .replaceAll("/+","/");
+                Pattern pattern =Pattern.compile(regex);
+                handlerMappings.add(new KKHandlerMapping(pattern,instance,method));
+                System.out.println("Mapped:"+regex+"------>"+method);
+            }
+        }
+        
     }
 
     //初始化url和Method的一对一对应关系
-    private void doInitHandlerMapping() {
+  /*  private void doInitHandlerMapping() {
         if (this.applicationContext.getBeanDefinitionCount() == 0){ return;}
         for (String beanName :this.applicationContext.getBeanDefinitionNames()) {
             Object instance = applicationContext.getBean(beanName);
@@ -140,11 +261,11 @@ public class KKDispatcherServlet extends HttpServlet {
                 KKRequestMapping requestMapping = method.getAnnotation(KKRequestMapping.class);
                 //避免出现 demoquery或者demo//query的情况
                 String url = ("/"+baseUrl+"/"+requestMapping.value()).replaceAll("/+","/");
-                handlerMapping.put(url,method);
+                handlerMappings.put(url,method);
                 System.out.println("Mapped:"+url+","+method);
             }
         }
-    }
+    }*/
 
     //如果类名本身是小写字母，确实会出问题
     //但是我要说明的是：这个方法是我自己用，private的

@@ -10,17 +10,28 @@ import com.kkedu.mvcframework.bean.support.KKDefaultListableBeanFactory;
 import com.kkedu.mvcframework.core.KKBeanFactory;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class KKApplicationContext implements KKBeanFactory {
 
     private KKDefaultListableBeanFactory registry = new KKDefaultListableBeanFactory();
 
-    //三级缓存 ,终极缓存
-    private Map<String,KKBeanWrapper> factoryBeanInstanceCache = new HashMap<String,KKBeanWrapper>();
+    //循环依赖的标识,当前正在创建BeanName Mark一下
+    /**
+     * 注意:1、通过构造器注入的不能支持循环依赖
+     *     2、非单例的,不支持循环依赖
+     *     *解决循环依赖问题只需要一级缓存
+     */
+    private Set<String> singletonsCurrentlyInCreation = new HashSet<String>();
 
+    //一级缓存,保存成熟的Bean 可以对外开放的
+    private Map<String,Object> singletonObjects = new HashMap<String,Object>();
+
+    //二级缓存,保存纯净早期的Bean
+    private Map<String,Object> earlySingletonObjects = new HashMap<String,Object>();
+
+    //三级缓存 ,终极缓存 可以拿到代理的bean
+    private Map<String,KKBeanWrapper> factoryBeanInstanceCache = new HashMap<String,KKBeanWrapper>();
     private Map<String,Object> factoryBeanObjectCache = new HashMap<String,Object>();
 
     private KKBeanDefinitionReader reader;
@@ -65,8 +76,21 @@ public class KKApplicationContext implements KKBeanFactory {
         //1、先拿到BeanDefinition配置信息
         KKBeanDefinition beanDefinition = registry.beanDefinitionMap.get(beanName);
 
+        //enter
+        Object singleton = getSingleton(beanName,beanDefinition);
+        if (singleton!=null){
+            return singleton;
+        }
+        //标记Bean正在创建
+        if (!singletonsCurrentlyInCreation.contains(beanName)){
+            singletonsCurrentlyInCreation.add(beanName);
+        }
+
         //2、反射实例化对象
         Object instance = instantiateBean(beanName,beanDefinition);
+
+        //保存到一级缓存
+        this.singletonObjects.put(beanName,instance);
 
         //3、将返回的Bean对象封装成BeanWrapper
         KKBeanWrapper beanWrapper = new KKBeanWrapper(instance);
@@ -78,6 +102,25 @@ public class KKApplicationContext implements KKBeanFactory {
         this.factoryBeanInstanceCache.put(beanName,beanWrapper);
 
         return beanWrapper.getWrappedInstance();
+    }
+
+    private Object getSingleton(String beanName, KKBeanDefinition beanDefinition) {
+
+        //先去一级缓存中拿
+        Object bean  =singletonObjects.get(beanName);
+
+        //如果一级缓存中没有,但是又有创建标识,说明就是循环依赖
+        if (bean == null && singletonsCurrentlyInCreation.contains(beanName)){
+            bean = earlySingletonObjects.get(beanName);
+            //如果二级缓存中也没有,就去三级缓存中取
+            if (bean == null){
+                bean = instantiateBean(beanName,beanDefinition);
+                //将创建出来的bean放到二级缓存中
+                earlySingletonObjects.put(beanName,bean);
+                //aop的时候这边还有个需要移除三级缓存的骚操作
+            }
+        }
+        return bean;
     }
 
     private void populateBean(String beanName, KKBeanDefinition beanDefinition, KKBeanWrapper beanWrapper) {
@@ -110,11 +153,12 @@ public class KKApplicationContext implements KKBeanFactory {
             //反射调用的方式
             //给entry.getValue()这个对象的field字段，赋ioc.get(beanName)这个值
             try {
-                if (this.factoryBeanInstanceCache.get(autowiredBeanName)==null){
+               /* if (this.factoryBeanInstanceCache.get(autowiredBeanName)==null){
                     continue;
                 }
                 //依赖注入,实际上这里就是自动赋值
-                field.set(instance,this.factoryBeanInstanceCache.get(autowiredBeanName).getWrappedInstance());
+                field.set(instance,this.factoryBeanInstanceCache.get(autowiredBeanName).getWrappedInstance());*/
+                field.set(instance,getBean(autowiredBeanName));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -144,5 +188,9 @@ public class KKApplicationContext implements KKBeanFactory {
 
     public String[] getBeanDefinitionNames(){
         return this.registry.beanDefinitionMap.keySet().toArray(new String[0]);
+    }
+
+    public Properties getConfig() {
+        return this.reader.getConfig();
     }
 }
